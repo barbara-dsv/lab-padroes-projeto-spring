@@ -29,6 +29,8 @@ public class ClienteServiceImpl implements ClienteService {
 	private EnderecoRepository enderecoRepository;
 	@Autowired
 	private ViaCepService viaCepService;
+	@Autowired
+	private GerenciadorNotificacoes gerenciadorNotificacoes;
 	
 	// Strategy: Implementar os métodos definidos na interface.
 	// Facade: Abstrair integrações com subsistemas, provendo uma interface simples.
@@ -49,6 +51,8 @@ public class ClienteServiceImpl implements ClienteService {
 	@Override
 	public void inserir(Cliente cliente) {
 		salvarClienteComCep(cliente);
+		gerenciadorNotificacoes.notificarCliente(cliente, "Seu cadastro foi realizado com sucesso!",
+				"email");
 	}
 
 	@Override
@@ -57,13 +61,21 @@ public class ClienteServiceImpl implements ClienteService {
 		Optional<Cliente> clienteBd = clienteRepository.findById(id);
 		if (clienteBd.isPresent()) {
 			salvarClienteComCep(cliente);
+			gerenciadorNotificacoes.notificarCliente(cliente,
+					"Seus dados foram atualizados com sucesso!", "sms");
 		}
 	}
 
 	@Override
 	public void deletar(Long id) {
-		// Deletar Cliente por ID.
-		clienteRepository.deleteById(id);
+		Optional<Cliente> cliente = clienteRepository.findById(id);
+		if(cliente.isPresent()){
+			// Deletar Cliente por ID.
+			clienteRepository.deleteById(id);
+			gerenciadorNotificacoes.notificarCliente(cliente.get(), "Seu cadastro foi removido com sucesso!", "email");
+		}
+
+
 	}
 
 	private void salvarClienteComCep(Cliente cliente) {
@@ -79,5 +91,4 @@ public class ClienteServiceImpl implements ClienteService {
 		// Inserir Cliente, vinculando o Endereco (novo ou existente).
 		clienteRepository.save(cliente);
 	}
-
 }
